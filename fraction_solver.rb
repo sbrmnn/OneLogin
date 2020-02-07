@@ -11,7 +11,6 @@ class FracHash < Hash
   end
 
   def print_mixed_number
-
     sign = self[:den] < 0 ? "-" : ""
 
     whole = self[:whole]
@@ -19,36 +18,22 @@ class FracHash < Hash
     den = self[:den].abs
 
     if whole == 0
-      remainder = num%den
-      if remainder == 0
-        "#{sign}#{num/den}"
-      elsif remainder > 1
+      ratio = num.to_f/den
+      if ratio == 0
+        return "0"
+      elsif ratio == 1
+        return "#{sign}1"
+      elsif ratio > 1 && (num%den == 0)
+        return "#{sign}#{ratio.to_i.to_s}"
+      elsif ratio > 1
+        "#{sign}#{ratio.to_i}_#{num%den}/#{den}"
       else
+        "#{sign}#{num}/#{den}"
       end
-
-
-
-      case num%den
-        when 1
-          "1"
-        when -1
-          "-1"
-        else
-          "#{sign}#{num}/#{den}"
-      end
+    elsif num == 0
+     "#{sign}#{whole}"
     else
-
-    end
-    if whole == 0 && (num%den==1)
-      "1"
-    elsif whole != 0 && (num%den==1)
-      "#{sign}#{whole}"
-    elsif whole != 0 && (num%den==1)
-      "#{sign}#{whole}"
-    elsif whole == 0 && (num != 0 || den != 0 )
-      "#{sign}#{num}/#{den}"
-    else
-      "#{sign}#{num/den}_#{num%den}/#{den}"
+     "#{sign}#{whole}_#{num}/#{den}"
     end
   end
 
@@ -63,8 +48,6 @@ class FracHash < Hash
     self
   end
 end
-
-
 
 class FracHashCalculator
 
@@ -126,9 +109,8 @@ class FracHashCalculator
       f1[:den] * f2[:den]
     end
 
-    def simplify_fraction(num, den)
+    def simplify_fraction(num, den, f=FracHash.new)
       factor = gcd den, num
-      f = FracHash.new
       f[:den] = den/factor
       f[:num] = num/factor
       f
@@ -191,20 +173,15 @@ def solve_equation(s)
       else
         toggle_list[:ignore_whitespace] && next
         operator = toggle_list[:operator]
-        if operator == :add
-          sum_stack.push(hh.dup)
-        elsif operator == :subtract
+        if operator == :add || operator == :subtract
           hhdup = hh.dup
-          hhdup[:den]*=-1
+          (operator == :subtract) && hhdup[:den]*=-1
           sum_stack.push(hhdup)
         else
           sum_stack.push(FracHashCalculator.public_send(toggle_list[:operator] , sum_stack.pop, hh))
         end
-
         (ii == string_size) && next
-
         hh.reset!
-
         toggle_list[:ignore_whitespace] = true
         toggle_list[:is_mixed_value] = false
     end
