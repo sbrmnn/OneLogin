@@ -147,7 +147,7 @@ def solve_equation(s)
       else
         next if toggle_list[:ignore_whitespace]
         if operator == :add
-          sum_stack.push(FractionHashCalculator.convert_to_improper(hh.dup))
+          sum_stack.push(hh.dup)
         else
           pop_val = sum_stack.pop || FractionHash.new
           sum_stack.push(FractionHashCalculator.public_send(operator , pop_val, hh))
