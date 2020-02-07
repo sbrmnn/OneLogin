@@ -1,7 +1,6 @@
-require 'byebug'
 raise "Need atleast one argument." if ARGV[0].nil?
 
-class FractionHash < Hash
+class FracHash < Hash
 
   def initialize
     set_to_default
@@ -11,14 +10,49 @@ class FractionHash < Hash
     set_to_default
   end
 
-  def print_proper_fraction
-    remainder = self[:num]%self[:den]
-    if remainder == 0
-      "#{self[:num]}"
+  def print_mixed_number
+
+    sign = self[:den] < 0 ? "-" : ""
+
+    whole = self[:whole]
+    num = self[:num]
+    den = self[:den].abs
+
+    if whole == 0
+      remainder = num%den
+      if remainder == 0
+        "#{sign}#{num/den}"
+      elsif remainder > 1
+      else
+      end
+
+
+
+      case num%den
+        when 1
+          "1"
+        when -1
+          "-1"
+        else
+          "#{sign}#{num}/#{den}"
+      end
     else
-      "#{self[:num]/self[:den]}_#{self[:num]%self[:den]}/#{self[:den]}"
+
+    end
+    if whole == 0 && (num%den==1)
+      "1"
+    elsif whole != 0 && (num%den==1)
+      "#{sign}#{whole}"
+    elsif whole != 0 && (num%den==1)
+      "#{sign}#{whole}"
+    elsif whole == 0 && (num != 0 || den != 0 )
+      "#{sign}#{num}/#{den}"
+    else
+      "#{sign}#{num/den}_#{num%den}/#{den}"
     end
   end
+
+
 
   private
 
@@ -26,139 +60,157 @@ class FractionHash < Hash
     self[:whole] = 0
     self[:num]  = 0
     self[:den]  = 1
-    self[:proper] = false
     self
   end
 end
 
 
 
-class FractionHashCalculator
+class FracHashCalculator
 
   def self.add(f1, f2)
-    convert_to_improper(f1)
-    convert_to_improper(f2)
+    convert_to_fraction(f1)
+    convert_to_fraction(f2)
+    return (simplify_fraction(f1[:num], f1[:den]) || simplify_fraction(f2[:num], f2[:den])) if f1.nil? || f2.nil?
     den = lcm(f1, f2)
     num = (f1[:num] * (den/f1[:den])) + (f2[:num] * (den/f2[:den]))
     simplify_fraction(num, den)
   end
 
+  def self.divide(f1, f2)
+    convert_to_fraction(f1)
+    convert_to_fraction(f2)
+    return (simplify_fraction(f1[:num], f1[:den]) || simplify_fraction(f2[:num], f2[:den])) if f1.nil? || f2.nil?
+    den = f1[:den] * f2[:num]
+    num = f1[:num] * f2[:den]
+    simplify_fraction(num, den)
+  end
+
+  def self.multiply(f1, f2)
+    convert_to_fraction(f1)
+    convert_to_fraction(f2)
+    return (simplify_fraction(f1[:num], f1[:den]) || simplify_fraction(f2[:num], f2[:den])) if f1.nil? || f2.nil?
+    den = f1[:den] * f2[:den]
+    num = f1[:num] * f2[:num]
+    simplify_fraction(num, den)
+  end
+
   def self.subtract(f1, f2)
-    convert_to_improper(f1)
-    convert_to_improper(f2)
+    convert_to_fraction(f1)
+    convert_to_fraction(f2)
+    return (simplify_fraction(f1[:num], f1[:den]) || simplify_fraction(f2[:num], f2[:den])) if f1.nil? || f2.nil?
     den = lcm(f1, f2)
     num = (f1[:num] * (den/f1[:den])) - (f2[:num] * (den/f2[:den]))
     simplify_fraction(num, den)
   end
 
-  def self.multiply(f1, f2)
-    convert_to_improper(f1)
-    convert_to_improper(f2)
 
-    f = FractionHash.new
+  class << self
 
-    num = f1[:num] * f2[:num]
-    den = f1[:den] * f2[:den]
-    factor = gcd den, num
+    private
 
-    f[:num] = num/factor
-    f[:den] = den/factor
-    f
-  end
+    def convert_to_fraction(f)
+      return nil if f.nil?
+      raise ZeroDivisionError if f[:den] == 0
+      f[:num] =  (f[:whole] * f[:den].abs) + f[:num]
+      f[:whole] = 0
+      f
+    end
 
-  def self.divide(f1, f2)
-    convert_to_improper(f1)
-    convert_to_improper(f2)
+    def gcd(a, b)
+      return a if b.zero?
+      gcd b, a % b
+    end
 
-    f = FractionHash.new
+    def lcm(f1, f2)
+      f1[:den] * f2[:den]
+    end
 
-    num = f1[:num] * f2[:den]
-    den = f1[:den] * f2[:num]
-    factor = gcd den, num
-
-    f[:num] = num/factor
-    f[:den] = den/factor
-    f
-  end
-
-  def self.simplify_fraction(num, den)
-    factor = gcd den, num
-    f = FractionHash.new
-    f[:num] = num/factor
-    f[:den] = den/factor
-    f
-  end
-
-  def self.convert_to_improper(f)
-    raise ZeroDivisionError if f[:den] == 0
-    f[:num] =  (f[:whole] * f[:den].abs) + f[:num]
-    f[:whole] = 0
-    f[:proper] = false
-    f
-  end
-
-  def self.lcm(f1, f2)
-    f1[:den] * f2[:den]
-  end
-
-  def self.gcd(a, b)
-    return a if b.zero?
-    gcd b, a % b
+    def simplify_fraction(num, den)
+      factor = gcd den, num
+      f = FracHash.new
+      f[:den] = den/factor
+      f[:num] = num/factor
+      f
+    end
   end
 end
 
 def solve_equation(s)
-  hh = FractionHash.new
-  toggle_list = {ignore_whitespace: false}
+
+  hh = FracHash.new
+
+  toggle_list = {
+      ignore_whitespace: false,
+      is_mixed_value: false,
+      pointer: :whole,
+      operator: :add
+  }
+
   sum_stack = []
-  pointer = :whole
-  operator = :add
+
   string_size = s.size
+
   for ii in (0..string_size)
     char = s[ii]
+
     case char
       when /-/
-        s[ii+1]&.match(/\s/) ? (operator = :subtract) : (hh[:den]*=-1)
-        pointer = :whole
+        if s[ii+1]&.match(/\s/)
+          sum_stack = [FracHashCalculator.add(sum_stack[0], sum_stack[1])]
+          (toggle_list[:operator] = :subtract)
+        else
+          (hh[:den]*=-1)
+        end
+        toggle_list[:pointer] = :whole
       when /\d/
-        pointer_val = hh[pointer]
-        hh[pointer] = (pointer == :den && s[ii-1]&.match(/\//)) ? char.to_i * pointer_val : pointer_val * 10 + char.to_i
+        pointer_val = hh[toggle_list[:pointer]]
+        hh[toggle_list[:pointer]] = (toggle_list[:pointer] == :den && s[ii-1]&.match(/\//)) ? char.to_i * pointer_val : pointer_val * 10 + char.to_i
         toggle_list[:ignore_whitespace] = false
       when /\+/
-        sum_stack = [FractionHashCalculator.add(sum_stack[0], sum_stack[1])] if sum_stack.size == 2
-        operator = :add
-        pointer = :whole
+        sum_stack = [FracHashCalculator.add(sum_stack[0], sum_stack[1])]
+        toggle_list[:operator] = :add
+        toggle_list[:pointer] = :whole
       when /\*/
-        pointer = :whole
-        operator = :multiply
+        toggle_list[:pointer] = :whole
+        toggle_list[:operator] = :multiply
       when /\//
         if s[ii+1]&.match(/\s/)
-          operator = :divide
-          pointer = :whole
+          toggle_list[:operator] = :divide
+          toggle_list[:pointer] = :whole
           next
-        elsif !hh[:proper]
+        end
+        unless toggle_list[:is_mixed_value]
           hh[:num] = hh[:whole]
           hh[:whole] = 0
         end
-        pointer = :den
+        toggle_list[:pointer] = :den
       when /_/
-        pointer = :num
-        hh[:proper] = true
+        toggle_list[:pointer] = :num
+        toggle_list[:is_mixed_value] = true
       else
-        next if toggle_list[:ignore_whitespace]
+        toggle_list[:ignore_whitespace] && next
+        operator = toggle_list[:operator]
         if operator == :add
           sum_stack.push(hh.dup)
+        elsif operator == :subtract
+          hhdup = hh.dup
+          hhdup[:den]*=-1
+          sum_stack.push(hhdup)
         else
-          pop_val = sum_stack.pop || FractionHash.new
-          sum_stack.push(FractionHashCalculator.public_send(operator , pop_val, hh))
+          sum_stack.push(FracHashCalculator.public_send(toggle_list[:operator] , sum_stack.pop, hh))
         end
-        next if ii == string_size
+
+        (ii == string_size) && next
+
         hh.reset!
+
         toggle_list[:ignore_whitespace] = true
+        toggle_list[:is_mixed_value] = false
     end
   end
-  sum = (sum_stack.size == 2) ? FractionHashCalculator.add(sum_stack[0], sum_stack[1]) : sum_stack[0]
-  puts sum.print_proper_fraction
+  sum = FracHashCalculator.add(sum_stack[0], sum_stack[1])
+  puts sum.print_mixed_number
 end
 
 solve_equation(ARGV[0].strip)
