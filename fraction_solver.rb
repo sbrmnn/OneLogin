@@ -20,11 +20,11 @@ class FracHash < Hash
     if whole == 0
       ratio = num.to_f/den
       if ratio == 0
-        return "0"
+        "0"
       elsif ratio == 1
-        return "#{sign}1"
+        "#{sign}1"
       elsif ratio > 1 && (num%den == 0)
-        return "#{sign}#{ratio.to_i.to_s}"
+        "#{sign}#{ratio.to_i.to_s}"
       elsif ratio > 1
         "#{sign}#{ratio.to_i}_#{num%den}/#{den}"
       else
@@ -119,7 +119,6 @@ class FracHashCalculator
 end
 
 def solve_equation(s)
-
   hh = FracHash.new
 
   toggle_list = {
@@ -128,14 +127,13 @@ def solve_equation(s)
       pointer: :whole,
       operator: :add
   }
-
+  
   sum_stack = []
 
   string_size = s.size
 
   for ii in (0..string_size)
     char = s[ii]
-
     case char
       when /-/
         if s[ii+1]&.match(/\s/)
