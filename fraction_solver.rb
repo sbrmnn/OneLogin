@@ -85,7 +85,7 @@ class FracHashCalculator
     simplify_fraction(num, den)
   end
 
-  def lcm(f1, f2)
+  def self.lcm(f1, f2)
     f1[:den] * f2[:den]
   end
 
