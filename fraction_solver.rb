@@ -87,6 +87,10 @@ class FracHashCalculator
     simplify_fraction(num, den)
   end
 
+  def lcm(f1, f2)
+    f1[:den] * f2[:den]
+  end
+
 
   class << self
 
@@ -103,10 +107,6 @@ class FracHashCalculator
     def gcd(a, b)
       return a if b.zero?
       gcd b, a % b
-    end
-
-    def lcm(f1, f2)
-      f1[:den] * f2[:den]
     end
 
     def simplify_fraction(num, den, f=FracHash.new)
