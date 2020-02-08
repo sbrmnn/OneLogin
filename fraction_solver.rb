@@ -37,8 +37,6 @@ class FracHash < Hash
     end
   end
 
-
-
   private
 
   def set_to_default
@@ -90,7 +88,6 @@ class FracHashCalculator
   def lcm(f1, f2)
     f1[:den] * f2[:den]
   end
-
 
   class << self
 
@@ -145,8 +142,8 @@ def solve_equation(s)
         toggle_list[:pointer] = :whole
       when /\d/
         pointer_val = hh[toggle_list[:pointer]]
-        first_number_after_fraction_symbol = (toggle_list[:pointer] == :den && s[ii-1]&.match(/\//))
-        hh[toggle_list[:pointer]] =  first_number_after_fraction_symbol ? char.to_i * pointer_val : pointer_val * 10 + char.to_i
+        num_after_fraction_symbol = (toggle_list[:pointer] == :den && s[ii-1]&.match(/\//))
+        hh[toggle_list[:pointer]] =  num_after_fraction_symbol ? char.to_i * pointer_val : pointer_val * 10 + char.to_i
         toggle_list[:ignore_whitespace] = false
       when /\+/
         sum_stack = [FracHashCalculator.add(sum_stack[0], sum_stack[1])]
