@@ -1,4 +1,4 @@
-raise "Need atleast one argument." if ARGV[0].nil?
+raise "Equation not supplied." if ARGV[0].nil?
 
 class FracHash < Hash
 
