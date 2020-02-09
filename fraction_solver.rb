@@ -3,47 +3,34 @@ raise "Equation not supplied." if ARGV[0].nil?
 class FracHash < Hash
 
   def initialize
-    set_to_default
+    reset!
   end
 
   def reset!
-    set_to_default
-  end
-
-  def print_mixed_number
-    sign = self[:den] < 0 ? "-" : ""
-
-    whole = self[:whole]
-    num = self[:num]
-    den = self[:den].abs
-
-    if whole == 0
-      ratio = num.to_f/den
-      if ratio == 0
-        "0"
-      elsif ratio == 1
-        "#{sign}1"
-      elsif ratio > 1 && (num%den == 0)
-        "#{sign}#{ratio.to_i.to_s}"
-      elsif ratio > 1
-        "#{sign}#{ratio.to_i}_#{num%den}/#{den}"
-      else
-        "#{sign}#{num}/#{den}"
-      end
-    elsif num == 0
-     "#{sign}#{whole}"
-    else
-     "#{sign}#{whole}_#{num}/#{den}"
-    end
-  end
-
-  private
-
-  def set_to_default
     self[:whole] = 0
     self[:num]  = 0
     self[:den]  = 1
     self
+  end
+
+  def print_mixed_number
+    sign = self[:den] < 0 ? "-" : ""
+    whole = self[:whole]
+    num = self[:num]
+    den = self[:den].abs
+    case whole
+      when 0
+        ratio = num.to_f/den
+        if ratio == 0
+          "0"
+        elsif ratio >= 1
+          (num%den == 0) ? "#{sign}#{ratio.to_i}" : "#{sign}#{ratio.to_i}_#{num%den}/#{den}"
+        else
+          "#{sign}#{num}/#{den}"
+        end
+      else
+        (num == 0) ? "#{sign}#{whole}" : "#{sign}#{whole}_#{num}/#{den}"
+    end
   end
 end
 
@@ -116,13 +103,14 @@ class FracHashCalculator
 end
 
 def solve_equation(s)
+  return puts s if (s.size == 1 && s.match(/\d/)) || (s.size == 2 && s[0].match(/-/) && s[1].match(/\d/))
+
   hh = FracHash.new
 
   toggle_list = {
-      ignore_whitespace: false,
-      is_mixed_value: false,
-      pointer: :whole,
-      operator: :add
+    is_mixed_value: false,
+    pointer: :whole,
+    operator: :add
   }
   
   sum_stack = []
@@ -136,15 +124,13 @@ def solve_equation(s)
         if s[ii+1]&.match(/\s/)
           sum_stack = [FracHashCalculator.add(sum_stack[0], sum_stack[1])]
           (toggle_list[:operator] = :subtract)
-        else
-          (hh[:den]*=-1)
         end
+        hh[:den]*=-1
         toggle_list[:pointer] = :whole
       when /\d/
         pointer_val = hh[toggle_list[:pointer]]
         num_after_fraction_symbol = (toggle_list[:pointer] == :den && s[ii-1]&.match(/\//))
         hh[toggle_list[:pointer]] =  num_after_fraction_symbol ? char.to_i * pointer_val : pointer_val * 10 + char.to_i
-        toggle_list[:ignore_whitespace] = false
       when /\+/
         sum_stack = [FracHashCalculator.add(sum_stack[0], sum_stack[1])]
         toggle_list[:operator] = :add
@@ -167,18 +153,15 @@ def solve_equation(s)
         toggle_list[:pointer] = :num
         toggle_list[:is_mixed_value] = true
       else
-        toggle_list[:ignore_whitespace] && next
+        (s[ii]&.match(/\s/) && !s[ii-1]&.match(/\d/)) && next
         operator = toggle_list[:operator]
         if operator == :add || operator == :subtract
-          hhdup = hh.dup
-          (operator == :subtract) && hhdup[:den]*=-1
-          sum_stack.push(hhdup)
+          sum_stack.push(hh.dup)
         else
           sum_stack.push(FracHashCalculator.public_send(toggle_list[:operator] , sum_stack.pop, hh))
         end
         (ii == string_size) && next
         hh.reset!
-        toggle_list[:ignore_whitespace] = true
         toggle_list[:is_mixed_value] = false
     end
   end
